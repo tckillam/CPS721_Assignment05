@@ -166,7 +166,7 @@ loc(X,P,[A|S]) :- not (A=pickUp(X,P)), not (A=putDown(X,P)), loc(X,P,S).
 
 % if one of the previous actions was rinse, then item X is wet
 wet(X, [rinse(X)|S]).
-wet([A|S]) :- not(A=rinse(X)), wet(S).
+wet([A|S]) :- not(A=rinse(X)), wet(X,S).
 
 
 % scrubbers do not get dirty so as long as as item X is not a scrubber, it is possible that item(X) is dirty and in 
@@ -174,12 +174,12 @@ wet([A|S]) :- not(A=rinse(X)), wet(S).
 % and then scrubbed and rinsed at some point. If it was not cleaned in this order, then it is dirty
 dirty(X, S) :- not(scrubber(X)), not clean(X, S).
 clean(X,[rinse(X), scrub(X,Y), addSoap(Y)|S]) :- dish(X), scrubber(Y).
-clean(X, [A|S]) :- dish(X), not(A=rinse(X)), clean(S).
+clean(X, [A|S]) :- dish(X), not(A=rinse(X)), clean(X,S).
 
 
 % if a scrubber has had soap added to it in one of its previous actions, then it is soapy
 soapy(X, [addSoap(X)|S]) :- scrubber(X).
-soapy([A|S]) :- scrubber(X), not(A=rinse(X)), soapy(S).
+soapy([A|S]) :- scrubber(X), not(A=rinse(X)), soapy(X,S).
 
 %%%%% SECTION: declarative_heuristics_dishwashing
 %%%%% The predicate useless(A,ListOfPastActions) is true if an action A is useless
@@ -207,15 +207,15 @@ useless(turnOnFaucet,[turnOffFaucet|S]).
 useless(turnOffFaucet,[turnOnFaucet|S]).
 
 % it is useless to put dirty dishes in the dish_rack
-useless(putDown(X, dish_rack),S) :- dirty(X).
+useless(putDown(X, dish_rack),S) :- dish(X), dirty(X,S).
 % it is useless to put soapy dishes in the dish_rack
-useless(putDown(X, dish_rack),S) :- soapy(X).
-% it is useless to put dishes on the dish_rack that are not wet
-useless(putDown(X, dish_rack),S) :- not (wet(X)).
+useless(putDown(X, dish_rack),S) :- dish(X), soapy(X,S).
+% it is useless to put dishes in the dish_rack that are not wet
+useless(putDown(X, dish_rack),S) :- dish(X), not (wet(X,S)).
 
 % it is useless to put wet or soapy dishes on the counter
-useless(putDown(X, counter),S) :- wet(X).
-useless(putDown(X, counter),S) :- soapy(X).
+useless(putDown(X, counter),S) :- dish(X), wet(X,S).
+useless(putDown(X, counter),S) :- dish(X), soapy(X,S).
 
 % it is useless to pick up dishes from the counter that are not dirty
-useless(pickUp(X, counter),S) :- not dirty(X).
+useless(pickUp(X, counter),S) :- dish(X), not dirty(X,S).
