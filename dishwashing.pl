@@ -134,8 +134,8 @@ poss(rinse(X), S) :- faucetOn(S), holding(X, S).
 
 % the robot is holding item X if the previous action was to pick up item X, 
 % or if one of the previous actions was to pick up item X
-holding(X, [pickup(X,P)|S]).
-holding(X, [A|S]) :- not(A=putDown(X,P)), holding(X,S). 
+holding(X, [pickUp(X,P)|S]).
+holding(X, [A|S]) :- not(A=putDown(X,P)), not(A=pickUp(X,P)), holding(X,S). 
 
 
 % if there were no previous actions, the robot is holding nothing, but if the previous action was pickup, then the number of items
@@ -143,15 +143,15 @@ holding(X, [A|S]) :- not(A=putDown(X,P)), holding(X,S).
 % was putting down an item X, then the number of items being held decreases by one while not going below zero because you cannot hold less
 % than 0 items. And if the previous action is neither pickUp or putDown, then the number of items being held goes unchanged
 numHolding(0, []).
-numHolding(C, [pickup(X,P)|S]) :- numHolding(C1, S), C is C1 + 1, not(C > 2).
+numHolding(C, [pickUp(X,P)|S]) :- numHolding(C1, S), C is C1 + 1, not(C > 2).
 numHolding(C, [putDown(X,P)|S]) :- numHolding(C1, S), C is C1 - 1, not(C < 0).
-numHolding(C, [A|S]) :- not(A=pickup(X,P)), not(A=putDown(X,P)), numHolding(C1, S), C is C1, not(C > 2), not(C < 0).
+numHolding(C, [A|S]) :- not(A=pickUp(X,P)), not(A=putDown(X,P)), numHolding(C1, S), C is C1, not(C > 2), not(C < 0).
 
 
 % if the previous action was turnOnFaucet, then the faucet is on, but if the previous action was not to turn off the faucet, then check to sense
 % if one of the previous actions was turnOnFaucet
 faucetOn([turnOnFaucet|S]).
-faucetOn([A|S]) :- not(A=turnOffFaucet), faucetOn(S).
+faucetOn([A|S]) :- not(A=turnOffFaucet), not(A=turnOnFaucet), faucetOn(S).
 
 
 /*
@@ -161,7 +161,7 @@ is holding X in S, then no such loc fluent will hold for X in S.
 % if the previous action was to putDown item X, then it is in place P, else if it was not previously picked up,
 % then it will be in location P if item X was putDown at some point in situation S
 loc(X,P,[putDown(X,P)|S]).
-loc(X,P,[A|S]) :- not (A=pickUp(X,P)), loc(X,P,S).
+loc(X,P,[A|S]) :- not (A=pickUp(X,P)), not (A=putDown(X,P)), loc(X,P,S).
 
 
 % if one of the previous actions was rinse, then item X is wet
@@ -196,5 +196,26 @@ soapy([A|S]) :- scrubber(X), not(A=rinse(X)), soapy(S).
 %%%%%	
 %%%%% write your rules implementing the predicate  useless(Action, History) here. %
 
+% it is useless to pickUp item X after just putting it down
+useless(pickUp(X, P),[putDown(X, P)|S]).
+% it is useless to putDown item X after just picking it down
+useless(putDown(X, P),[pickUp(X, P)|S]).
 
+% it is useless to turn on the faucet after just turning it off
+useless(turnOnFaucet,[turnOffFaucet|S]).
+% it is useless to turn off the faucet after just turning it on
+useless(turnOffFaucet,[turnOnFaucet|S]).
 
+% it is useless to put dirty dishes in the dish_rack
+useless(putDown(X, dish_rack),S) :- dirty(X).
+% it is useless to put soapy dishes in the dish_rack
+useless(putDown(X, dish_rack),S) :- soapy(X).
+% it is useless to put dishes on the dish_rack that are not wet
+useless(putDown(X, dish_rack),S) :- not (wet(X)).
+
+% it is useless to put wet or soapy dishes on the counter
+useless(putDown(X, counter),S) :- wet(X).
+useless(putDown(X, counter),S) :- soapy(X).
+
+% it is useless to pick up dishes from the counter that are not dirty
+useless(pickUp(X, counter),S) :- not dirty(X).
