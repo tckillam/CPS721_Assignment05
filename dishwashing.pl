@@ -87,57 +87,33 @@ item(X) :- scrubber(X).
 %%%%% mentions these variables. 
 
 
-/ 
-it is possible to pickup an item X from place P when the item X is in that place P, when the robot
-is not already holding onto that item and when the robot is not already holding 2 objects
-/
+% it is possible to pickup an item X from place P when the item X is in that place P, when the robot
+% is not already holding onto that item and when the robot is not already holding 2 objects
 poss(pickUp(X, P), S) :- loc(X, P, S), not (holding(X, S)), numHolding(C, S), not (C > 1).
 
-/
-• putDown(X, P): puts down item X to place P. Only applicable if X is being held by the robot.
-After applying this action, X is no longer held by the robot.
-/
 
+% an item X can be putDown as long as item X was being held by the robot
 poss(putDown(X, P), S) :- holding(X, S).
 
-/
-• turnOnFaucet: turns on the faucet. This action is only applicable if the robot has a free hand
-(ie. it is holding at most one item) to turn on the faucet.
-• turnOffFaucet: turns off the faucet. This action is only applicable if the robot has a free hand
-to turn off the faucet.
-/
 
+% a faucet can be turned on if the robot is holding less than two items and the faucet is not already on
 poss(turnOnFaucet, S) :- numHolding(C, S), C < 2, not (faucetOn(S)).
+
+
+% a faucet can be turned off if the robot is holding less than two items and the faucet is already on
 poss(turnOffFaucet, S) :- numHolding(C, S), C < 2, faucetOn(S).
 
-/
-• addSoap(X): adds soap to X. This action is only applicable if X is a scrubber that is held by
-the robot. The robot must have a free hand to add soap to the scrubber. The scrubber will be
-soapy after adding soap.
-/
 
+% the robot can add soap to scrubber X if it is holding only scrubber X and no other items
 poss(addSoap(X), S) :- holding(X, S), numHolding(1, S), scrubber(X). 
 
-/
 
-• scrub(X, Y): scrubs dish X using scrubber Y. Both X and Y must be held by the robot to apply
-this action. If X is glassware, it can only be scrubbed with a brush. If X is a plate, it can only
-be scrubbed with a sponge. If Y is soapy, then X will be soapy after it is scrubbed. If X is a dirty
-dish, it will remain dirty after it is scrubbed (ie. the food stays on it until the dirt and soap
-is rinsed off). Note that scrubbing a dish with a scrubber that has no soap on it will have no
-effect on the dish.
-/
-
+% it is possible to scrub dish X with scrubber Y if the robot is holding both items and that X is not a glassware when Y is a sponge
+% and when X is not a plate while Y is a brush
 poss(scrub(X, Y), S) :- holding(X, S), holding(Y, S), numHolding(2, S), dish(X), scrubber(Y), not (glassware(X), Y = sponge), not (plate(X), Y = brush).
 
-/
-• rinse(X): rinses item X. The faucet must be on and X must currently be held by the robot in
-order to rinse it. If X is a scrubber that is soapy, it will no longer be soapy after rinsing it. If
-X is a dish that is both soapy and dirty (ie. because it was scrubbed using a soapy scrubber),
-then it will be clean and not soapy after being rinsed. In all cases, an item will be wet after
-being rinsed.
-/
 
+% an item X can be rinsed if the faucet is on and the robot is holding item X
 poss(rinse(X), S) :- faucetOn(S), holding(X, S).
 
 
@@ -155,62 +131,55 @@ poss(rinse(X), S) :- faucetOn(S), holding(X, S).
 %%%%%
 %%%%% Write your successor state rules here: you have to write brief comments %
 
-/
-• holding(X, S) holds if the robot is holding item X in S.
-/
 
-% the robot is holding item X if he previous action was to pick up item X, 
-% or if one of the previous axtions was to pick up item X
+% the robot is holding item X if the previous action was to pick up item X, 
+% or if one of the previous actions was to pick up item X
 holding(X, [pickup(X,P)|S]).
 holding(X, [A|S]) :- not(A=putDown(X,P)), holding(X,S). 
 
-/
-• numHolding(C, S) holds if the robot is holding C different items in S. Since the robot has 2
-hands, this is at most 2 items.
 
-COME BACKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK
-/
-
-% if the previous action was holding the item X then the robot is holding at least one item,
-% if another previous action... im debating using holding or pickup... i think need to redo this with pickup when im better rested
+% if there were no previous actions, the robot is holding nothing, but if the previous action was pickup, then the number of items
+% being held C increased by one and the number of items held cannot exceed two as the robot only has two hands. But if the previous action
+% was putting down an item X, then the number of items being held decreases by one while not going below zero because you cannot hold less
+% than 0 items. And if the previous action is neither pickUp or putDown, then the number of items being held goes unchanged
 numHolding(0, []).
-numHolding(C, [holding(X)|S]) :- numHolding(C1, S), C is C1 + 1, not(C > 2).
-numHolding(C, [A|S]) :- not(A=numHolding(C1, S)), C is C1 + 0, not(C > 2).
+numHolding(C, [pickup(X,P)|S]) :- numHolding(C1, S), C is C1 + 1, not(C > 2).
+numHolding(C, [putDown(X,P)|S]) :- numHolding(C1, S), C is C1 - 1, not(C < 0).
+numHolding(C, [A|S]) :- not(A=pickup(X,P)), not(A=putDown(X,P)), numHolding(C1, S), C is C1, not(C > 2), not(C < 0).
 
-/
-• faucetOn(S) holds if the faucet is on in S.
-/
 
+% if the previous action was turnOnFaucet, then the faucet is on, but if the previous action was not to turn off the faucet, then check to sense
+% if one of the previous actions was turnOnFaucet
 faucetOn([turnOnFaucet|S]).
 faucetOn([A|S]) :- not(A=turnOffFaucet), faucetOn(S).
 
-/
-• loc(X, P, S) holds if the location of item X in situation S is P. Here, P is a place. If the robot
+
+/*
+loc(X, P, S) holds if the location of item X in situation S is P. Here, P is a place. If the robot
 is holding X in S, then no such loc fluent will hold for X in S.
-/
+*/
+% if the previous action was to putDown item X, then it is in place P, else if it was not previously picked up,
+% then it will be in location P if item X was putDown at some point in situation S
+loc(X,P,[putDown(X,P)|S]).
+loc(X,P,[A|S]) :- not (A=pickUp(X,P)), loc(X,P,S).
 
-/
-• wet(X, S) holds if the item X is wet in S.
-/
 
+% if one of the previous actions was rinse, then item X is wet
 wet(X, [rinse(X)|S]).
 wet([A|S]) :- not(A=rinse(X)), wet(S).
 
-/
-• dirty(X, S) holds if the item X is dirty in S. Recall that scrubbers never get dirty.
-/
 
+% scrubbers do not get dirty so as long as as item X is not a scrubber, it is possible that item(X) is dirty and in 
+% order for item X to be dirty, it must not be clean. For an item to be clean, it must first have soap added to it,
+% and then scrubbed and rinsed at some point. If it was not cleaned in this order, then it is dirty
 dirty(X, S) :- not(scrubber(X)), not clean(X, S).
+clean(X,[rinse(X), scrub(X,Y), addSoap(Y)|S]) :- dish(X), scrubber(Y).
+clean(X, [A|S]) :- dish(X), not(A=rinse(X)), clean(S).
 
-clean(X,[rinse(X), scrub(X,Y), addSoap(Y)|S]).
-clean(X, [A|S]) :- not(A=rinse(X)), clean(S).
 
-/
-• soapy(X, S) holds if the scrubber X is soapy in S.
-/
-
+% if a scrubber has had soap added to it in one of its previous actions, then it is soapy
 soapy(X, [addSoap(X)|S]) :- scrubber(X).
-soapy([A|S]) :- not(A=addSoap(X)), soapy(S), scrubber(X).
+soapy([A|S]) :- scrubber(X), not(A=rinse(X)), soapy(S).
 
 %%%%% SECTION: declarative_heuristics_dishwashing
 %%%%% The predicate useless(A,ListOfPastActions) is true if an action A is useless
