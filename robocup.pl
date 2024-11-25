@@ -149,5 +149,6 @@ robotLoc(Robot, Row, Column, [A|S]) :- not A=move(Robot, Row1, Column1, Row, Col
 %%%%%	
 %%%%% write your rules implementing the predicate  useless(Action,History) here. %
 
-
+% it is useless for a robot to move from location 1 to 2 and then go from location 2 to 1
+useless(move(Robot, Row1, Col1, Row2, Col2),[move(Robot, Row2, Col2, Row1, Col1)|S]).
 
