@@ -119,10 +119,20 @@ poss(move(Robot, Row1, Col1, Row2, Col2), S) :- robotLoc(Robot, Row1, Col1, S), 
 /*
  Robot is at row Row and column Col in situation S.
 */
-robotLoc(Robot, Row, Column, [move(Robot, Row1, Column1, Row, Column)|S]) :- not Row=Row1, Column=Column1.
-robotLoc(Robot, Row, Column, [move(Robot, Row1, Column1, Row, Column)|S]) :- Row=Row1, not Column=Column1.
-robotLoc(Robot, Row, Column, [A|S]) :- not A=move(Robot, Row1, Column1, Row, Column), robotLoc(Robot, Row, Column, S).
-
+robotLoc(Robot, Row, Column, [move(Robot, Row1, Column1, Row, Column)|S]) :- not Row=Row1, Column=Column1,
+                                                                             Row1 >= 0, numRows(X), Row1 < X, Row >= 0, Row < X,
+                                                                             Column1 >= 0, numCols(Y), Column1 < Y, Column >= 0, Column < Y.
+robotLoc(Robot, Row, Column, [move(Robot, Row1, Column1, Row, Column)|S]) :- Row=Row1, not Column=Column1,
+                                                                             Row1 >= 0, numRows(X), Row1 < X, Row >= 0, Row < X,
+                                                                             Column1 >= 0, numCols(Y), Column1 < Y, Column >= 0, Column < Y.
+robotLoc(Robot, Row, Column, [A|S]) :- not A=move(Robot, Row1, Column1, Row, Column), not Row=Row1, Column=Column1,
+                                                                             Row1 >= 0, numRows(X), Row1 < X, Row >= 0, Row < X,
+                                                                             Column1 >= 0, numCols(Y), Column1 < Y, Column >= 0, Column < Y,
+                                                                             robotLoc(Robot, Row, Column, S).
+robotLoc(Robot, Row, Column, [A|S]) :- not A=move(Robot, Row1, Column1, Row, Column), Row=Row1, not Column=Column1,
+                                                                             Row1 >= 0, numRows(X), Row1 < X, Row >= 0, Row < X,
+                                                                             Column1 >= 0, numCols(Y), Column1 < Y, Column >= 0, Column < Y,
+                                                                             robotLoc(Robot, Row, Column, S).
 
 %%%%% SECTION: declarative_heuristics_robocup
 %%%%% The predicate useless(A,ListOfPastActions) is true if an action A is useless
