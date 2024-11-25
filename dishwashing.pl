@@ -89,7 +89,7 @@ item(X) :- scrubber(X).
 
 % it is possible to pickup an item X from place P when the item X is in that place P, when the robot
 % is not already holding onto that item and when the robot is not already holding 2 objects
-poss(pickUp(X, P), S) :- loc(X, P, S), not (holding(X, S)), numHolding(C, S), not (C > 1).
+poss(pickUp(X, P), S) :- loc(X, P, S), not (holding(X, S)), numHolding(C, S), C < 2.
 
 
 % an item X can be putDown as long as item X was being held by the robot
@@ -110,7 +110,8 @@ poss(addSoap(X), S) :- holding(X, S), numHolding(1, S), scrubber(X).
 
 % it is possible to scrub dish X with scrubber Y if the robot is holding both items and that X is not a glassware when Y is a sponge
 % and when X is not a plate while Y is a brush
-poss(scrub(X, Y), S) :- holding(X, S), holding(Y, S), numHolding(2, S), dish(X), scrubber(Y), not (glassware(X), Y = sponge), not (plate(X), Y = brush).
+poss(scrub(X, Y), S) :- holding(X, S), holding(Y, S), numHolding(2, S), glassware(X), Y = brush.
+poss(scrub(X, Y), S) :- holding(X, S), holding(Y, S), numHolding(2, S), plate(X), Y = sponge.
 
 
 % an item X can be rinsed if the faucet is on and the robot is holding item X
@@ -143,9 +144,9 @@ holding(X, [A|S]) :- not(A=putDown(X,P)), not(A=pickUp(X,P)), holding(X,S).
 % was putting down an item X, then the number of items being held decreases by one while not going below zero because you cannot hold less
 % than 0 items. And if the previous action is neither pickUp or putDown, then the number of items being held goes unchanged
 numHolding(0, []).
-numHolding(C, [pickUp(X,P)|S]) :- numHolding(C1, S), C is C1 + 1, not(C > 2).
-numHolding(C, [putDown(X,P)|S]) :- numHolding(C1, S), C is C1 - 1, not(C < 0).
-numHolding(C, [A|S]) :- not(A=pickUp(X,P)), not(A=putDown(X,P)), numHolding(C1, S), C is C1, not(C > 2), not(C < 0).
+numHolding(C, [pickUp(X,P)|S]) :- numHolding(C1, S), C is C1 + 1, C =< 2.
+numHolding(C, [putDown(X,P)|S]) :- numHolding(C1, S), C is C1 - 1, C >= 0.
+numHolding(C, [A|S]) :- not(A=pickUp(X,P)), not(A=putDown(X,P)), numHolding(C1, S), C is C1, C >= 0, C =< 2.
 
 
 % if the previous action was turnOnFaucet, then the faucet is on, but if the previous action was not to turn off the faucet, then check to sense
@@ -160,9 +161,10 @@ is holding X in S, then no such loc fluent will hold for X in S.
 */
 % if the previous action was to putDown item X, then it is in place P, else if it was not previously picked up,
 % then it will be in location P if item X was putDown at some point in situation S
+/*loc(X,P,[]).*/
 loc(X,P,[putDown(X,P)|S]).
-loc(X,P,[A|S]) :- not (A=pickUp(X,P)), not (A=putDown(X,P)), loc(X,P,S).
-
+loc(X,P,[A|S]) :- not (A=pickUp(_,_)), loc(X,P,S).
+loc(X,P,[A|S]) :- not (A=putDown(_,_)), loc(X,P,S).
 
 % if one of the previous actions was rinse, then item X is wet
 wet(X, [rinse(X)|S]).
@@ -172,8 +174,9 @@ wet([A|S]) :- not(A=rinse(X)), wet(X,S).
 % scrubbers do not get dirty so as long as as item X is not a scrubber, it is possible that item(X) is dirty and in 
 % order for item X to be dirty, it must not be clean. For an item to be clean, it must first have soap added to it,
 % and then scrubbed and rinsed at some point. If it was not cleaned in this order, then it is dirty
-dirty(X, S) :- not(scrubber(X)), not clean(X, S).
-clean(X,[rinse(X), scrub(X,Y), addSoap(Y)|S]) :- dish(X), scrubber(Y).
+dirty(X, S) :- dish(X), not clean(X, S).
+clean(X,[rinse(X), scrub(X,Y), addSoap(Y)|S]) :- plate(X), Y = sponge.
+clean(X,[rinse(X), scrub(X,Y), addSoap(Y)|S]) :- glassware(X), Y = brush.
 clean(X, [A|S]) :- dish(X), not(A=rinse(X)), clean(X,S).
 
 
