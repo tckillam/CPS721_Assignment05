@@ -59,7 +59,39 @@ goal_state(22, S) :- robotLoc(r1, 2, 4, S).
 %%%%% are instantiated by constants before you apply negation to the predicate that 
 %%%%% mentions these variables. 
 
+/*
+this action means Robot moves from the location of
+Row1, Col1 to Row2, Col2. Robots can only move one row or column at a time, and cannot
+move diagonally. They also cannot move into a location where there is another robot or an
+opponent. A robot does not need to have the ball to move. For example, in Figure 1, r5 can
+move to row 3, column 1 in a single step, but they cannot move to row 3, column 0 or row 4,
+column 1 in a single step. Note that a robot cannot move off the field. A robot can also not
+move to the same location they are already at (ie. move(R, 1, 2, 1, 2) is not a valid action).
 
+opponentAt(Row, Col)
+
+robotLoc(Robot, Row, Col, S)
+
+Row1 >= 0, Row1 < numRows(X), Row2 >= 0, Row2 < numRows(X),
+Col1 >= 0, Col1 < numRows(X), Col2 >= 0, Col2 < numCols(X), 
+
+*/
+
+poss(move(Robot, Row1, Col1, Row2, Col2), S) :- Row2 is Row1 - 1, Col2 is Col1, Row1 >= 0, numRows(X), Row1 < X, Row2 >= 0, Row2 < X,
+                                                not (opponentAt(Row3, Col3), Row2=Row3, Col2=Col3), 
+                                                not (robotLoc(Robot2, Row3, Col3, S), Row2=Row3, Col2=Col3, not Robot=Robot2).
+
+poss(move(Robot, Row1, Col1, Row2, Col2), S) :- Row2 is Row1 + 1, Col2 is Col1, Row1 >= 0, numRows(X), Row1 < X, Row2 >= 0, Row2 < X,
+                                                not (opponentAt(Row3, Col3), Row2=Row3, Col2=Col3), 
+                                                not (robotLoc(Robot2, Row3, Col3, S), Row2=Row3, Col2=Col3, not Robot=Robot2).
+
+poss(move(Robot, Row1, Col1, Row2, Col2), S) :- Col2 is Col1 - 1, Row2 is Row1, Col1 >= 0, numCols(X), Col1 < X, Col2 >= 0, Col2 < X, 
+                                                not (opponentAt(Row3, Col3), Row2=Row3, Col2=Col3), 
+                                                not (robotLoc(Robot2, Row3, Col3, S), Row2=Row3, Col2=Col3, not Robot=Robot2).
+                                                
+poss(move(Robot, Row1, Col1, Row2, Col2), S) :- Col2 is Col1 + 1, Row2 is Row1, Col1 >= 0, numCols(X), Col1 < X, Col2 >= 0, Col2 < X, 
+                                                not (opponentAt(Row3, Col3), Row2=Row3, Col2=Col3), 
+                                                not (robotLoc(Robot2, Row3, Col3, S), Row2=Row3, Col2=Col3, not Robot=Robot2).
 
 
 %%%%% SECTION: successor_state_axioms_robocup
@@ -76,7 +108,11 @@ goal_state(22, S) :- robotLoc(r1, 2, 4, S).
 %%%%%
 %%%%% Write your successor state rules here: you have to write brief comments %
 
-
+/*
+ Robot is at row Row and column Col in situation S.
+*/
+robotLoc(Robot, Row, Column, [move(Robot, Row1, Col1, Row, Col)|S]) :- not Row=Row1, not Col=Col1.
+robotLoc(Robot, Row, Column, [A|S]) :- not (A=move(Robot, Row1, Col1, Row, Col)), robotLoc(Robot, Row, Column, S).
 
 
 %%%%% SECTION: declarative_heuristics_robocup
