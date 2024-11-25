@@ -76,20 +76,28 @@ Row1 >= 0, Row1 < numRows(X), Row2 >= 0, Row2 < numRows(X),
 Col1 >= 0, Col1 < numRows(X), Col2 >= 0, Col2 < numCols(X), 
 
 */
-
-poss(move(Robot, Row1, Col1, Row2, Col2), S) :- Row2 is Row1 - 1, Col2 is Col1, Row1 >= 0, numRows(X), Row1 < X, Row2 >= 0, Row2 < X,
+% use robotLoc
+poss(move(Robot, Row1, Col1, Row2, Col2), S) :- robotLoc(Robot, Row1, Col1, S), Row2 is Row1 - 1, Col2 is Col1, 
+                                                Row1 >= 0, numRows(X), Row1 < X, Row2 >= 0, Row2 < X,
+                                                Col1 >= 0, numCols(Y), Col1 < Y, Col2 >= 0, Col2 < Y,
                                                 not (opponentAt(Row3, Col3), Row2=Row3, Col2=Col3), 
                                                 not (robotLoc(Robot2, Row3, Col3, S), Row2=Row3, Col2=Col3, not Robot=Robot2).
 
-poss(move(Robot, Row1, Col1, Row2, Col2), S) :- Row2 is Row1 + 1, Col2 is Col1, Row1 >= 0, numRows(X), Row1 < X, Row2 >= 0, Row2 < X,
+poss(move(Robot, Row1, Col1, Row2, Col2), S) :- robotLoc(Robot, Row1, Col1, S), Row2 is Row1 + 1, Col2 is Col1,  
+                                                Row1 >= 0, numRows(X), Row1 < X, Row2 >= 0, Row2 < X,
+                                                Col1 >= 0, numCols(Y), Col1 < Y, Col2 >= 0, Col2 < Y,
                                                 not (opponentAt(Row3, Col3), Row2=Row3, Col2=Col3), 
                                                 not (robotLoc(Robot2, Row3, Col3, S), Row2=Row3, Col2=Col3, not Robot=Robot2).
 
-poss(move(Robot, Row1, Col1, Row2, Col2), S) :- Col2 is Col1 - 1, Row2 is Row1, Col1 >= 0, numCols(X), Col1 < X, Col2 >= 0, Col2 < X, 
+poss(move(Robot, Row1, Col1, Row2, Col2), S) :- robotLoc(Robot, Row1, Col1, S), Col2 is Col1 - 1, Row2 is Row1,  
+                                                Row1 >= 0, numRows(X), Row1 < X, Row2 >= 0, Row2 < X,
+                                                Col1 >= 0, numCols(Y), Col1 < Y, Col2 >= 0, Col2 < Y,
                                                 not (opponentAt(Row3, Col3), Row2=Row3, Col2=Col3), 
                                                 not (robotLoc(Robot2, Row3, Col3, S), Row2=Row3, Col2=Col3, not Robot=Robot2).
                                                 
-poss(move(Robot, Row1, Col1, Row2, Col2), S) :- Col2 is Col1 + 1, Row2 is Row1, Col1 >= 0, numCols(X), Col1 < X, Col2 >= 0, Col2 < X, 
+poss(move(Robot, Row1, Col1, Row2, Col2), S) :- robotLoc(Robot, Row1, Col1, S), Col2 is Col1 + 1, Row2 is Row1,  
+                                                Row1 >= 0, numRows(X), Row1 < X, Row2 >= 0, Row2 < X,
+                                                Col1 >= 0, numCols(Y), Col1 < Y, Col2 >= 0, Col2 < Y,
                                                 not (opponentAt(Row3, Col3), Row2=Row3, Col2=Col3), 
                                                 not (robotLoc(Robot2, Row3, Col3, S), Row2=Row3, Col2=Col3, not Robot=Robot2).
 
@@ -111,8 +119,9 @@ poss(move(Robot, Row1, Col1, Row2, Col2), S) :- Col2 is Col1 + 1, Row2 is Row1, 
 /*
  Robot is at row Row and column Col in situation S.
 */
-robotLoc(Robot, Row, Column, [move(Robot, Row1, Col1, Row, Col)|S]) :- not Row=Row1, not Col=Col1.
-robotLoc(Robot, Row, Column, [A|S]) :- not (A=move(Robot, Row1, Col1, Row, Col)), robotLoc(Robot, Row, Column, S).
+robotLoc(Robot, Row, Column, [move(Robot, Row1, Column1, Row, Column)|S]) :- not Row=Row1, Column=Column1.
+robotLoc(Robot, Row, Column, [move(Robot, Row1, Column1, Row, Column)|S]) :- Row=Row1, not Column=Column1.
+robotLoc(Robot, Row, Column, [A|S]) :- not A=move(Robot, Row1, Column1, Row, Column), robotLoc(Robot, Row, Column, S).
 
 
 %%%%% SECTION: declarative_heuristics_robocup
