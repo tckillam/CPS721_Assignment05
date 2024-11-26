@@ -197,4 +197,3 @@ hasBall(Robot, [A|S]) :- not A=pass(Robot1, Robot), not Robot=Robot1, hasBall(Ro
 
 % it is useless for a robot to move from location 1 to 2 and then go from location 2 to 1
 useless(move(Robot, Row1, Col1, Row2, Col2),[move(Robot, Row2, Col2, Row1, Col1)|S]).
-
