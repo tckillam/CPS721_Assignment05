@@ -2,11 +2,11 @@
 % If you only have 2 group members, leave the last space blank
 %
 %%%%%
-%%%%% NAME: 
-%%%%% NAME:
+%%%%% NAME: Shaghayegh Dehghanisanij
+%%%%% NAME: Theresa Killam
 %%%%% NAME:
 %
-% Add the required rules in the corresponding sections. 
+% Add the required rules in the corresponding sections.
 % If you put the rules in the wrong sections, you will lose marks.
 %
 % You may add additional comments as you choose but DO NOT MODIFY the comment lines below
@@ -31,8 +31,8 @@
 %%%%% NOTE, you can only uncomment one at a time
 %%%%% HINT: You can create other files with other initial states to more easily test individual actions
 %%%%%       To do so, just replace the line below with one loading in the file with your initial state
-%:- [robocupInit1].
-:- [robocupInit2].
+:- [robocupInit1].
+%:- [robocupInit2].
 
 %%%%% SECTION: goal_states_robocup
 %%%%% Below we define different goal states, each with a different ID
@@ -44,150 +44,225 @@
 goal_state(11, S) :- robotLoc(r1, 0, 1, S).
 goal_state(12, S) :- hasBall(r2, S).
 goal_state(13, S) :- hasBall(r3, S).
-goal_state(14, S) :- scored(S). 
+goal_state(14, S) :- scored(S).
 goal_state(15, S) :- robotLoc(r1, 2, 2, S).
 goal_state(16, S) :- robotLoc(r1, 3, 2, S).
 
 %% Goal states for robocupInit1
-goal_state(21, S) :- scored(S). 
+goal_state(21, S) :- scored(S).
 goal_state(22, S) :- robotLoc(r1, 2, 4, S).
 
 %%%%% SECTION: precondition_axioms_robocup
 %%%%% Write precondition axioms for all actions in your domain. Recall that to avoid
 %%%%% potential problems with negation in Prolog, you should not start bodies of your
-%%%%% rules with negated predicates. Make sure that all variables in a predicate 
-%%%%% are instantiated by constants before you apply negation to the predicate that 
+%%%%% rules with negated predicates. Make sure that all variables in a predicate
+%%%%% are instantiated by constants before you apply negation to the predicate that
 %%%%% mentions these variables.
 
-% check adjacency (non-diagonal movement)
-adjacent(Row1, Col1, Row2, Col2) :- Row1 is Row2 , Col2 is Col1 + 1.
-adjacent(Row1, Col1, Row2, Col2) :- Row1 is Row2 , Col1 is Col2 + 1.
-adjacent(Row1, Col1, Row2, Col2) :- Col1 is Col2 , Row1 is Row2 + 1.
-adjacent(Row1, Col1, Row2, Col2) :- Col1 is Col2 , Row2 is Row1 + 1.
+/*
+this action means Robot moves from the location of
+Row1, Col1 to Row2, Col2. Robots can only move one row or column at a time, and cannot
+move diagonally. They also cannot move into a location where there is another robot or an
+opponent. A robot does not need to have the ball to move. For example, in Figure 1, r5 can
+move to row 3, column 1 in a single step, but they cannot move to row 3, column 0 or row 4,
+column 1 in a single step. Note that a robot cannot move off the field. A robot can also not
+move to the same location they are already at (ie. move(R, 1, 2, 1, 2) is not a valid action).
 
+opponentAt(Row, Col)
 
-% check a position is in boundaries
-in_bounds(Row, Col) :-
-    numRows(NumRows),
-    numCols(NumCols),
-    Row >= 0,
-    Row < NumRows,
-    Col >= 0,
-    Col < NumCols.
+robotLoc(Robot, Row, Col, S)
 
+Row1 >= 0, Row1 < numRows(X), Row2 >= 0, Row2 < numRows(X),
+Col1 >= 0, Col1 < numRows(X), Col2 >= 0, Col2 < numCols(X),
 
-% check a position is occupied by a robot or opponent
-occupied(Row, Col, S) :-
-    robotLoc(_, Row, Col, S).
-
-occupied(Row, Col, _) :-
-    opponentAt(Row, Col).
-
-% Helper predicate to generate numbers exclusively between two numbers
-between_exclusive_list(N1, N2, NsBetween) :-
-    N1 < N2,
-    NStart is N1 + 1,
-    NEnd is N2 - 1,
-    findall(N, between(NStart, NEnd, N), NsBetween).
-
-between_exclusive_list(N1, N2, NsBetween) :-
-    N1 > N2,
-    NStart is N1 - 1,
-    NEnd is N2 + 1,
-    findall(N, between(NEnd, NStart, N), NsBetween).
-
-between_exclusive_list(N1, N2, []) :-
-    N1 = N2.
-
-% Helper predicate to ensure no opponents are in the given columns for a row
-noOpponentAtPositions(Row, Cols) :-
-    forall(member(Col, Cols), not opponentAt(Row, Col)).
-
-% Helper predicate to ensure no opponents are in the given rows for a column
-noOpponentAtPositionsColumn(Rows, Col) :-
-    forall(member(Row, Rows), not opponentAt(Row, Col)).
-
-% Helper predicate to check for a clear path between two positions
-clearPath(Row1, Col1, Row2, Col2, S) :-
-    Row1 = Row2,
-    not Col1 = Col2,
-    between_exclusive_list(Col1, Col2, ColsBetween),
-    noOpponentAtPositions(Row1, ColsBetween).
-
-clearPath(Row1, Col1, Row2, Col2, S) :-
-    Col1 = Col2,
-    not Row1 = Row2,
-    between_exclusive_list(Row1, Row2, RowsBetween),
-    noOpponentAtPositionsColumn(RowsBetween, Col1).
-
-% Helper predicate to check for a clear path to the goal
-clearPathToGoal(Row, Col, S) :-
-    Row > 0,
-    findall(R, between(0, Row-1, R), RowsBetween),
-    noOpponentAtPositionsColumn(RowsBetween, Col).
-
-% Precondition for the move action
+*/
+% use robotLoc
 poss(move(Robot, Row1, Col1, Row2, Col2), S) :-
-    robot(Robot),
-    robotLoc(Robot, Row1, Col1, S),
-    adjacent(Row1, Col1, Row2, Col2),
-    in_bounds(Row2, Col2),
-    (not Row1 = Row2 , not Col1 = Col2), % Prevent moving to the same location
-    not occupied(Row2, Col2, S).
+    robotLoc(Robot, Row1, Col1, S), Row2 is Row1 - 1, Col2 is Col1,
+    Row1 >= 0, numRows(X), Row1 < X, Row2 >= 0, Row2 < X,
+    Col1 >= 0, numCols(Y), Col1 < Y, Col2 >= 0, Col2 < Y,
+    not (opponentAt(Row3, Col3), Row2=Row3, Col2=Col3),
+    not (robotLoc(Robot2, Row3, Col3, S), Row2=Row3, Col2=Col3, not Robot=Robot2).
 
-% Precondition for the pass action
+poss(move(Robot, Row1, Col1, Row2, Col2), S) :-
+    robotLoc(Robot, Row1, Col1, S), Row2 is Row1 + 1, Col2 is Col1,
+    Row1 >= 0, numRows(X), Row1 < X, Row2 >= 0, Row2 < X,
+    Col1 >= 0, numCols(Y), Col1 < Y, Col2 >= 0, Col2 < Y,
+    not (opponentAt(Row3, Col3), Row2=Row3, Col2=Col3),
+    not (robotLoc(Robot2, Row3, Col3, S), Row2=Row3, Col2=Col3, not Robot=Robot2).
+
+poss(move(Robot, Row1, Col1, Row2, Col2), S) :-
+    robotLoc(Robot, Row1, Col1, S), Col2 is Col1 - 1, Row2 is Row1,
+    Row1 >= 0, numRows(X), Row1 < X, Row2 >= 0, Row2 < X,
+    Col1 >= 0, numCols(Y), Col1 < Y, Col2 >= 0, Col2 < Y,
+    not (opponentAt(Row3, Col3), Row2=Row3, Col2=Col3),
+    not (robotLoc(Robot2, Row3, Col3, S), Row2=Row3, Col2=Col3, not Robot=Robot2).
+                                                
+poss(move(Robot, Row1, Col1, Row2, Col2), S) :-
+    robotLoc(Robot, Row1, Col1, S), Col2 is Col1 + 1, Row2 is Row1,
+    Row1 >= 0, numRows(X), Row1 < X, Row2 >= 0, Row2 < X,
+    Col1 >= 0, numCols(Y), Col1 < Y, Col2 >= 0, Col2 < Y,
+    not (opponentAt(Row3, Col3), Row2=Row3, Col2=Col3),
+    not (robotLoc(Robot2, Row3, Col3, S), Row2=Row3, Col2=Col3, not Robot=Robot2).
+
+/*
+
+pass(Robot1, Robot2): this action means Robot1 passes the ball to Robot2. In order to do
+so, Robot1 must have the ball. They can pass the ball any number of rows or columns in the
+vertical or horizontal directions, but they cannot pass diagonally. A robot may not pass the
+ball through a location where there is an opponent robot, but they MAY pass the ball through
+a grid location where there is a teammate robot (ie. the teammate just lets it pass by). After a
+pass, Robot1 no longer has the ball, and Robot2 has the ball. For example, in Figure 1, r1 can
+pass the ball to r2 or r3, but not r4 (no diagonal passes) or r5 (opponent in the way).
+
+*/
+
+% same rows
 poss(pass(Robot1, Robot2), S) :-
-    robot(Robot1),
-    robot(Robot2),
-    Robot1 \= Robot2,
-    hasBall(Robot1, S),
-    robotLoc(Robot1, Row1, Col1, S),
-    robotLoc(Robot2, Row2, Col2, S),
-    ((Row1 = Row2, Col1 \= Col2);
-     (Col1 = Col2, Row1 \= Row2)),
-    clearPath(Row1, Col1, Row2, Col2, S).
+hasBall(Robot1, S),
+robotLoc(Robot1,Row1,Col1,S),
+robotLoc(Robot2,Row1,Col2,S),
+not Robot1=Robot2,
+Row1 >= 0, numRows(X), Row1 < X,
+Col1 >= 0, numCols(Y), Col1 < Y,
+Col2 >= 0, Col2 < Y,
+not (opponentAt(Row1, Col3), Col1 < Col3, Col3 < Col2).
 
-% Precondition for the shoot action
-poss(shoot(Robot), S) :-
-    robot(Robot),
-    hasBall(Robot, S),
-    robotLoc(Robot, Row, Col, S),
-    goalCol(Col),
-    clearPathToGoal(Row, Col, S).
+
+
+% same columns
+poss(pass(Robot1, Robot2), S) :-
+hasBall(Robot1, S),
+robotLoc(Robot1,Row1,Col1,S),
+robotLoc(Robot2,Row2,Col1,S),
+not Robot1=Robot2,
+Col1 >= 0, numCols(Y), Col1 < Y,
+Row1 >= 0, numRows(X), Row1 < X,
+Row2 >= 0, Row2 < X,
+not (opponentAt(Row3, Col2), Row1 < Row3, Row3 < Row2).
+
+
+
+
+
+
+
+% shoot function:
+poss(shoot(Robot), S) :- hasBall(Robot,S), robotLoc(Robot, Row, Col, S), goalCol(X), Col=X,
+                         not (opponentAt(Row2, Col), Row2 > Row).
 
 
 
 %%%%% SECTION: successor_state_axioms_robocup
-%%%%% Write successor-state axioms that characterize how the truth value of all 
-%%%%% fluents change from the current situation S to the next situation [A | S]. 
-%%%%% You will need two types of rules for each fluent: 
-%%%%% 	(a) rules that characterize when a fluent becomes true in the next situation 
-%%%%%	as a result of the last action, and
-%%%%%	(b) rules that characterize when a fluent remains true in the next situation,
-%%%%%	unless the most recent action changes it to false.
-%%%%% When you write successor state axioms, you can sometimes start bodies of rules 
-%%%%% with negation of a predicate, e.g., with negation of equality. This can help 
+%%%%% Write successor-state axioms that characterize how the truth value of all
+%%%%% fluents change from the current situation S to the next situation [A | S].
+%%%%% You will need two types of rules for each fluent:
+%%%%%     (a) rules that characterize when a fluent becomes true in the next situation
+%%%%%    as a result of the last action, and
+%%%%%    (b) rules that characterize when a fluent remains true in the next situation,
+%%%%%    unless the most recent action changes it to false.
+%%%%% When you write successor state axioms, you can sometimes start bodies of rules
+%%%%% with negation of a predicate, e.g., with negation of equality. This can help
 %%%%% to make them a bit more efficient.
 %%%%%
 %%%%% Write your successor state rules here: you have to write brief comments %
 
+/*
+ Robot is at row Row and column Col in situation S.
+*/
+
+
+
+% Robot moves to a new position
+robotLoc(Robot, Row, Col, [move(Robot, _, _, Row, Col) | _]) :-
+    Row >= 0, numRows(MaxRows), Row < MaxRows,
+    Col >= 0, numCols(MaxCols), Col < MaxCols.
+
+% Robot retains its position if it was not involved in the last move
+robotLoc(Robot, Row, Col, [Action | S]) :-
+    not Action = move(Robot, _, _, _, _),
+    robotLoc(Robot, Row, Col, S).
+
+
+/*
+hasBall(Robot, S): Robot has the ball in situation S.
+*/
+
+
+% pass ball in same row
+hasBall(Robot, [pass(Robot1, Robot)|S]) :-
+not Robot=Robot1,
+robotLoc(Robot,Row1,Col1,S),
+robotLoc(Robot1,Row1,Col2,S),
+Row1 >= 0, numRows(X), Row1 < X,
+Col1 >= 0, numCols(Y), Col1 < Y,
+Col2 >= 0, Col2 < Y,
+not (opponentAt(Row2, Col3), Row1=Row2).
+
+
+% pass ball in same column
+hasBall(Robot, [pass(Robot1, Robot)|S]) :-
+not Robot=Robot1,
+robotLoc(Robot,Row1,Col1,S),
+robotLoc(Robot1,Row2,Col1,S),
+Col1 >= 0, numCols(Y), Col1 < Y,
+Row1 >= 0, numRows(X), Row1 < X,
+Row2 >= 0, Row2 < X,
+not (opponentAt(Row3, Col2), Col1=Col2).
+
+
+% Robot keeps the ball -> it did not pass it to another robot
+hasBall(Robot, [Action|S]) :-
+    Action \= pass(Robot, _),
+    hasBall(Robot, S).
+
+% check tail
+hasBall(Robot, [Action|S]) :-
+    not Action = pass(_, Robot),
+    hasBall(Robot, S).
+
+
+
+
+
+
+% score function:
+scored([shoot(Robot)|S]).
+scored([A|S]) :- not A=shoot(Robot), scored(S).
 
 
 
 %%%%% SECTION: declarative_heuristics_robocup
 %%%%% The predicate useless(A,ListOfPastActions) is true if an action A is useless
 %%%%% given the list of previously performed actions. The predicate useless(A,ListOfPastActions)
-%%%%% helps to solve the planning problem by providing declarative heuristics to 
-%%%%% the planner. If this predicate is correctly defined using a few rules, then it 
+%%%%% helps to solve the planning problem by providing declarative heuristics to
+%%%%% the planner. If this predicate is correctly defined using a few rules, then it
 %%%%% helps to speed-up the search that your program is doing to find a list of actions
 %%%%% that solves a planning problem. Write as many rules that define this predicate
-%%%%% as you can: think about useless repetitions you would like to avoid, and about 
-%%%%% order of execution (i.e., use common sense properties of the application domain). 
+%%%%% as you can: think about useless repetitions you would like to avoid, and about
+%%%%% order of execution (i.e., use common sense properties of the application domain).
 %%%%% Your rules have to be general enough to be applicable to any problem in your domain,
 %%%%% in other words, they have to help in solving a planning problem for any instance
 %%%%% (i.e., any initial and goal states).
-%%%%%	
+%%%%%
 %%%%% write your rules implementing the predicate  useless(Action,History) here. %
 
+% it is useless: a robot to move from location 1 to 2 and then go from location 2 to 1
+useless(move(Robot, Row1, Col1, Row2, Col2),[move(Robot, Row2, Col2, Row1, Col1)|S]).
+
+% useless to pass between 2 robots back & forth
+useless(pass(Robot1, Robot2), [pass(Robot2 , Robot1)]).
 
 
+% robot 1 moves loc1 to loc2
+% then passes to robot 2
+% then robot 2 moves loc2 to loc1
+useless(move(Robot2, _, _, Row1, Col1), [pass(Robot1, Robot2),move(Robot1, Row1, Col1, _, _) | S]).
+
+
+% 3 robots passing circular between each_other
+useless(pass(Robot3, Robot1), [pass(Robot2 , Robot3) , pass(Robot1 , Robot2)]).
+
+
+% any move after shoot
+useless(move(Robot, _, _, _, _),[shoot(R , S)]).
