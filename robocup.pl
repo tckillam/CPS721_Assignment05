@@ -59,24 +59,7 @@ goal_state(22, S) :- robotLoc(r1, 2, 4, S).
 %%%%% are instantiated by constants before you apply negation to the predicate that 
 %%%%% mentions these variables. 
 
-/*
-this action means Robot moves from the location of
-Row1, Col1 to Row2, Col2. Robots can only move one row or column at a time, and cannot
-move diagonally. They also cannot move into a location where there is another robot or an
-opponent. A robot does not need to have the ball to move. For example, in Figure 1, r5 can
-move to row 3, column 1 in a single step, but they cannot move to row 3, column 0 or row 4,
-column 1 in a single step. Note that a robot cannot move off the field. A robot can also not
-move to the same location they are already at (ie. move(R, 1, 2, 1, 2) is not a valid action).
 
-opponentAt(Row, Col)
-
-robotLoc(Robot, Row, Col, S)
-
-Row1 >= 0, Row1 < numRows(X), Row2 >= 0, Row2 < numRows(X),
-Col1 >= 0, Col1 < numRows(X), Col2 >= 0, Col2 < numCols(X), 
-
-*/
-% use robotLoc
 poss(move(Robot, Row1, Col1, Row2, Col2), S) :- robotLoc(Robot, Row1, Col1, S), Row2 is Row1 - 1, Col2 is Col1, 
                                                 Row1 >= 0, numRows(X), Row1 < X, Row2 >= 0, Row2 < X,
                                                 Col1 >= 0, numCols(Y), Col1 < Y, Col2 >= 0, Col2 < Y,
@@ -101,27 +84,30 @@ poss(move(Robot, Row1, Col1, Row2, Col2), S) :- robotLoc(Robot, Row1, Col1, S), 
                                                 not (opponentAt(Row3, Col3), Row2=Row3, Col2=Col3), 
                                                 not (robotLoc(Robot2, Row3, Col3, S), Row2=Row3, Col2=Col3, not Robot=Robot2).
 
-/*
 
-pass(Robot1, Robot2): this action means Robot1 passes the ball to Robot2. In order to do
-so, Robot1 must have the ball. They can pass the ball any number of rows or columns in the
-vertical or horizontal directions, but they cannot pass diagonally. A robot may not pass the
-ball through a location where there is an opponent robot, but they MAY pass the ball through
-a grid location where there is a teammate robot (ie. the teammate just lets it pass by). After a
-pass, Robot1 no longer has the ball, and Robot2 has the ball. For example, in Figure 1, r1 can
-pass the ball to r2 or r3, but not r4 (no diagonal passes) or r5 (opponent in the way).
-
-*/
 
 poss(pass(Robot1, Robot2), S) :- hasBall(Robot1, S), not Robot1=Robot2, robotLoc(Robot1,Row1,Col1,S), 
                                  robotLoc(Robot2,Row1,Col2,S), not Col1=Col2, Row1 >= 0, numRows(X), Row1 < X, 
                                  Col1 >= 0, numCols(Y), Col1 < Y, Col2 >= 0, Col2 < Y,
-                                 not (opponentAt(Row2, Col3), Row1=Row2).
+                                 not (opponentAt(Row2, Col3), Col1 < Col3, Col3 < Col2).
+poss(pass(Robot1, Robot2), S) :- hasBall(Robot1, S), not Robot1=Robot2, robotLoc(Robot1,Row1,Col1,S), 
+                                 robotLoc(Robot2,Row1,Col2,S), not Col1=Col2, Row1 >= 0, numRows(X), Row1 < X, 
+                                 Col1 >= 0, numCols(Y), Col1 < Y, Col2 >= 0, Col2 < Y,
+                                 not (opponentAt(Row2, Col3), Col1 > Col3, Col3 > Col2).
+
 poss(pass(Robot1, Robot2), S) :- hasBall(Robot1, S), not Robot1=Robot2, robotLoc(Robot1,Row1,Col1,S), 
                                  robotLoc(Robot2,Row2,Col1,S), not Row1=Row2, Col1 >= 0, numCols(Y), Col1 < Y, 
                                  Row1 >= 0, numRows(X), Row1 < X, Row2 >= 0, Row2 < X,
-                                 not (opponentAt(Row3, Col2), Col1=Col2).
+                                 not (opponentAt(Row3, Col2), Row1 < Row3, Row3 < Row2).
+poss(pass(Robot1, Robot2), S) :- hasBall(Robot1, S), not Robot1=Robot2, robotLoc(Robot1,Row1,Col1,S), 
+                                 robotLoc(Robot2,Row2,Col1,S), not Row1=Row2, Col1 >= 0, numCols(Y), Col1 < Y, 
+                                 Row1 >= 0, numRows(X), Row1 < X, Row2 >= 0, Row2 < X,
+                                 not (opponentAt(Row3, Col2), Row1 > Row3, Row3 > Row2).
 
+
+
+poss(shoot(Robot), S) :- hasBall(Robot,S), robotLoc(Robot, Row, Col, S), goalCol(X), Col=X,
+                         not (opponentAt(Row2, Col), Row2 > Row).
 
 %%%%% SECTION: successor_state_axioms_robocup
 %%%%% Write successor-state axioms that characterize how the truth value of all 
@@ -155,30 +141,23 @@ robotLoc(Robot, Row, Column, [A|S]) :- not A=move(Robot, Row1, Column1, Row, Col
                                                                              Column1 >= 0, numCols(Y), Column1 < Y, Column >= 0, Column < Y,
                                                                              robotLoc(Robot, Row, Column, S).
 
-/*
-hasBall(Robot, S): Robot has the ball in situation S.
-*/
 
 /*
-hasBall(Robot, [pass(Robot1, Robot)|S]) :- not Robot=Robot1, robotLoc(Robot,Row1,Col1,S), 
-                                 robotLoc(Robot1,Row1,Col2,S), not Col1=Col2, Row1 >= 0, numRows(X), Row1 < X, 
-                                 Col1 >= 0, numCols(Y), Col1 < Y, Col2 >= 0, Col2 < Y,
-                                 not (opponentAt(Row2, Col3), Row1=Row2).
-hasBall(Robot, [pass(Robot1, Robot)|S]) :- not Robot=Robot1, robotLoc(Robot,Row1,Col1,S), 
-                                 robotLoc(Robot1,Row2,Col1,S), not Row1=Row2, Col1 >= 0, numCols(Y), Col1 < Y, 
-                                 Row1 >= 0, numRows(X), Row1 < X, Row2 >= 0, Row2 < X,
-                                 not (opponentAt(Row3, Col2), Col1=Col2).
-hasBall(Robot, [A|S]) :- not A=pass(Robot1, Robot), not Robot=Robot1, robotLoc(Robot,Row1,Col1,S), 
-                                 robotLoc(Robot1,Row1,Col2,S), not Col1=Col2, Row1 >= 0, numRows(X), Row1 < X, 
-                                 Col1 >= 0, numCols(Y), Col1 < Y, Col2 >= 0, Col2 < Y,
-                                 not (opponentAt(Row2, Col3), Row1=Row2).
-hasBall(Robot, [A|S]) :- not A=pass(Robot1, Robot), not Robot=Robot1, robotLoc(Robot,Row1,Col1,S), 
-                                 robotLoc(Robot1,Row2,Col1,S), not Row1=Row2, Col1 >= 0, numCols(Y), Col1 < Y, 
-                                 Row1 >= 0, numRows(X), Row1 < X, Row2 >= 0, Row2 < X,
-                                 not (opponentAt(Row3, Col2), Col1=Col2), hasBall(Robot, S).
+robot has ball
 */
 hasBall(Robot, [pass(Robot1, Robot)|S]) :- not Robot=Robot1.
-hasBall(Robot, [A|S]) :- not A=pass(Robot1, Robot), not Robot=Robot1, hasBall(Robot, S).
+
+hasBall(Robot, [pass(Robot1, Robot), X|S]) :- not Robot=Robot1, robotLoc(Robot,R,C,S), robotLoc(Robot1,R1,C1,S), 
+                                              not R=R1, not C=C1, X=move(Robot1,R1,C1,R,C1).
+hasBall(Robot, [pass(Robot1, Robot), X|S]) :- not Robot=Robot1, robotLoc(Robot,R,C,S), robotLoc(Robot1,R1,C1,S), 
+                                              not R=R1, not C=C1, X=move(Robot1,R1,C1,R1,C).
+hasBall(Robot, [A|S]) :- not(A=pass(Robot1, Robot)), not Robot=Robot1, robotLoc(Robot,R3,C2,S), hasBall(Robot,S).
+
+/*
+the ball is in the net in situation S.
+*/
+scored([shoot(Robot)|S]).
+scored([A|S]) :- not A=shoot(Robot), scored(S).
 
 %%%%% SECTION: declarative_heuristics_robocup
 %%%%% The predicate useless(A,ListOfPastActions) is true if an action A is useless
@@ -195,5 +174,24 @@ hasBall(Robot, [A|S]) :- not A=pass(Robot1, Robot), not Robot=Robot1, hasBall(Ro
 %%%%%	
 %%%%% write your rules implementing the predicate  useless(Action,History) here. %
 
-% it is useless for a robot to move from location 1 to 2 and then go from location 2 to 1
+
+
+% it is useless: a robot to move from location 1 to 2 and then go from location 2 to 1
 useless(move(Robot, Row1, Col1, Row2, Col2),[move(Robot, Row2, Col2, Row1, Col1)|S]).
+
+% useless to pass between 2 robots back & forth
+useless(pass(Robot1, Robot2), [pass(Robot2 , Robot1)]).
+
+
+% robot 1 moves loc1 to loc2
+% then passes to robot 2
+% then robot 2 moves loc2 to loc1
+useless(move(Robot2, _, _, Row1, Col1), [pass(Robot1, Robot2),move(Robot1, Row1, Col1, _, _) | S]).
+
+
+% 3 robots passing circular between each_other
+useless(pass(Robot3, Robot1), [pass(Robot2 , Robot3) , pass(Robot1 , Robot2)]).
+
+
+% any move after shoot
+useless(move(Robot, _, _, _, _),[shoot(R , S)]).
