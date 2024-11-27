@@ -13,9 +13,9 @@
 %%%%% It should include information about the processor (mainly speed), 
 %%%%% amount of RAM, and operator system you ran your tests on.
 
-% Processor: Apple M1 (ARM-based), 8-core CPU
-% RAM: 8 GB (hw.memsize: 8,589,934,592 bytes)
-% Operating System: macOS 14.5 (Sonoma), BuildVersion 23F79
+Processor: Apple M1 (ARM-based), 8-core CPU
+RAM: 8 GB (hw.memsize: 8,589,934,592 bytes)
+Operating System: macOS 14.5 (Sonoma), BuildVersion 23F79
 
 %%%%% SECTION: summary
 %%%%% Summarize your results in 5-10 sentences. Describe which states you tested on, 
